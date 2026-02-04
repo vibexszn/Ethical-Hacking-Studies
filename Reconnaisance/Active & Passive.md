@@ -11,11 +11,15 @@ _**Netcraft:**_ A passive recon tool used to obtain website information (Date we
 
 _**Shodan:**_ Used to identify open ports and potential vulnerability
 
+_**Nmap:**_ Used to confirm if a host is alive, for port scanning, service detection
+
 ---------------------------------------------------------
 
 **Methodology**
 
 **_Passive Recon:_** No direct contact with the target
+
+_**Active Recon:**_ Direct interaction with the target infrastructure to gather real-time intelligence on open ports, running services, and potential vulnerabilities
 
 ----------------------------------------------------------------------------------------
 
@@ -103,27 +107,87 @@ Process: I used the spiderfoot cmd on my Kali terminal and performed the scan on
 
 <img width="1366" height="657" alt="now_now" src="https://github.com/user-attachments/assets/f9932976-ebf0-4871-8e69-6d638582d589" />
 
-**_In this jpeg above, i am able to get the subdomain and their ip addresses which i was unable to obtain while using recon-ng_**
+**_In this jpg above, i am able to get the subdomain and their ip addresses which i was unable to obtain while using recon-ng_**
 
 
 <img width="1366" height="657" alt="web_server" src="https://github.com/user-attachments/assets/1c29fd72-8bea-499a-84a7-300f5196f0bf" />
 
 <img width="1366" height="657" alt="confirmation of linode" src="https://github.com/user-attachments/assets/7e665096-785c-4e28-bbec-1c8f1e12b72a" />
 
+<img width="1366" height="657" alt="spiderfoot dns txt records" src="https://github.com/user-attachments/assets/91638275-88a6-4a80-b0b9-66c182912ac1" />
+
+
 _**Key findings:**_
+
 scanme.nmap.org subdomain 
 
 Confirmation of the webserver Apache HTTP 2.4.7 which was discovered when i used netcraft and shodan
 
 Confimation of the hosting provider (Linode) which i discovered earlier using netcraft
 
+Identification of Administrative and technical contacts( information that i would have gotten if i used whois <target.com>)
+
+DNS TXT Records (Google Site Verification: it confirms they are likely using Google search console or orhet goggle webmaster tools to monitor the sites performance, SPF Sender Policy Framework its a security record that tells other mail servers which IP are allowed to send email on behalf of nmap.org) _-spf ip_ 50.116.1.184
+
+_**After identifying trusted IP addreses in SPF TXT records, i perfromed rDNS lookupnto verify the ownership of the mail-sending infastructure**_
+
+<img width="1366" height="149" alt="nslookup" src="https://github.com/user-attachments/assets/80f3267c-9651-45f2-974c-502d1d14748f" />
+
+_The infastructure listed as "trusted" for mail delivery is verified as belonging to the internal scanme.nmap.org domain. This reduces the likelihood that the SPF record contains legacy or third-party IP ranges that could be exploited for domain impersonation_
 
 
+_**Now that i've performed the passive scan, i'll carry out active recon now in which i'll be directly interacting with my target**_
 
+N.B: While i was performing the passive recon, i discovered some vulnerabilities even without performing a vulnerability assessment yet but i'll talk about that in the vulnerability scan phase
 
+------------------------------------------------------------------------
 
+**ACTIVE RECONNAISSANCE: NMAP METHODOLOGY**
 
+Purpose: Identify open ports, running services, and potential vulnerabilities via direct interaction
 
+_**Before scanning, I performed host discovery by confirming the target was reachable to avoid wasting time on a dead host**_
 
+<img width="1366" height="657" alt="nmap_host_alive" src="https://github.com/user-attachments/assets/0b188dcb-a0e9-41e1-b720-64f7f6573a3b" />
 
+_**Secondly, I carried out a SYN Scan (Stealth). It’s stealth,fast and identifies which ports are open, closed, or filtered**_
 
+<img width="1366" height="295" alt="nmap_stealth_scan" src="https://github.com/user-attachments/assets/0ca4ee0b-1b10-4856-b109-f2f43831d424" />
+
+_**After discovering what ports are open, I performed a targeted scan on the open ports discovered when i run stealth scan in order to identify the software versions running. This is critical for finding matching exploits (CVEs).**_
+
+<img width="1366" height="368" alt="nmap_sv_scan" src="https://github.com/user-attachments/assets/6f6b5f72-0ee1-4573-8ff7-7320cc8bb74d" />
+
+_**To ensure no services were hidden on non-standard ports, I performed a full-range port scan of all 65,535 ports. To optimize for time without sacrificing depth, I utilized the Aggressive Scan (-A) suite and Timing Template 4 (-T4) to accelerate the discovery process**_
+
+<img width="1366" height="657" alt="nmap_full_port_scan" src="https://github.com/user-attachments/assets/b3e5000c-a4a7-4513-a19c-0c5bae7b1174" />
+
+_**Key findings:**_
+
+The target is tunning a Linux environment(Ubuntu) with Apache 2.4.7 and OpenSSH 6.6.1p1
+
+There's 100% consistency between my passive recon and my active footprinting
+
+In addition to the web server, active remove access(SSH) and custom echo services are exposed. The web server and SSH version are outdated as well establishing a strong baseline for the next phase which is vulnerability assessment
+
+I discovered the SSH host keys...SSH host keys are cryptographic fingerprints used by a server to identify itself to clients. This also shows that the server suppoerts multiple types of encryption. (DSA,RSA,ECDSA and ED25519) modern sedurity standards consider **DSA 1024-bit key** "weak"
+
+Port 21 (FTP) showed as _tcpwrapped_ which likely mean the connection was closed immediately maybe by a wirefall or TCP wrappers
+
+When i run the full port scan it identified a new port which didn't show in the SYN scan (Port 2123) _gtp_control_ but it's in a filtered state which indicates there's a firewall actively blocking or hiding the service
+
+-----------------------------------------------------------------------------
+
+_**Target Asset Inventory**_
+The following assets were identified and verified through passive and active reconnaissance
+
+| Asset Category | Identifier | Primary Host | Status | Technical Details |
+| :--- | :--- | :--- | :--- | :--- |
+| **Primary Domain** | `nmap.org` | Linode | Verified | Authoritative DNS managed by ns1.linode.com |
+| **Subdomain** | `scanme.nmap.org` | Linode | Active | Primary target; resolves to 45.33.32.156 |
+| **Subdomain** | `chat.nmap.org` | Linode | Active | Co-hosted on 45.33.32.156 (Virtual Hosting) |
+| **Subdomain** | `ack.nmap.org` | Linode | Verified | Confirmed via PTR/Reverse DNS lookup of SPF IPs |
+| **Web Infrastructure**| `45.33.32.156` | Linode | Up | Ubuntu 14.04 running Apache 2.4.7 |
+| **Mail Provider** | Google Workspace | Google | Verified | Identified via SPF TXT records |
+
+_Next up is the vulnerability assessment phase......_
