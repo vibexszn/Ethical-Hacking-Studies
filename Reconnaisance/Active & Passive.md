@@ -23,7 +23,7 @@ _**Active Recon:**_ Direct interaction with the target infrastructure to gather 
 
 ----------------------------------------------------------------------------------------
 
-Firstly, I identified my target. In this documentation, i'll be using **scanme.nmap.org** 
+Firstly, I identified my target. In this documentation, i'll be using **scanme.nmap.org**. To maintain strict adherence to cybersecurity ethics and legal standards, I utilized scanme.nmap.org for all demonstrations. This service is a community resource authorized for public testing, ensuring this project remains compliant with 'no-impact' testing protocols
 
 **_Phase 1:_** Passive Reconnaisance with Netcraft
 
