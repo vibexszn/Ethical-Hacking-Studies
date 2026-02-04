@@ -25,6 +25,10 @@ _**Active Recon:**_ Direct interaction with the target infrastructure to gather 
 
 Firstly, I identified my target. In this documentation, i'll be using **scanme.nmap.org**. To maintain strict adherence to cybersecurity ethics and legal standards, I utilized scanme.nmap.org for all demonstrations. This service is a community resource authorized for public testing, ensuring this project remains compliant with 'no-impact' testing protocols
 
+<img width="1354" height="682" alt="Screenshot 2026-02-04 120924" src="https://github.com/user-attachments/assets/e24fbcac-bfb2-4375-8a54-5b650150466e" />
+
+------------------------------------------------------------------
+
 **_Phase 1:_** Passive Reconnaisance with Netcraft
 
 This is to identify the underlying infrastructure, hosting provider, and SSL/TLS history without sending a single packet to the target's network.
